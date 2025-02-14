@@ -1,4 +1,0 @@
-INDEX VERSION 1.132+C:\bot\Exness\.metadata\.plugins\org.eclipse.jdt.core
-1877397639.index
-1696264553.index
-1865797976.index
