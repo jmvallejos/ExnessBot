@@ -1,4 +1,3 @@
-import threading
 import time
 import MetaTrader5 as mt5
 from Indicators.Stochastic.StochasticIndicator import StochasticIndicator

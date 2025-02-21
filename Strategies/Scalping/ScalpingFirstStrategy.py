@@ -16,7 +16,7 @@ class ScalpingFirstStrategy(threading.Thread):
 
     def buyAnalysis1(self):
         while(True):
-            secondToWaitStochasticConfirmation = 1
+            secondToWaitStochasticConfirmation = 5
             if(self.stochasticIndicator.kAboveDInLowLimit["secondsElapsed"] < secondToWaitStochasticConfirmation):
                 continue
 
@@ -25,4 +25,4 @@ class ScalpingFirstStrategy(threading.Thread):
                 secondStochastic = self.stochasticIndicator.kAboveDInLowLimit["secondsElapsed"] + self.stochasticIndicator.kAboveDInLowLimit["initTimeStamp"] 
                 threading.Thread(target=self.logger.logScalpingFirstStrategyBuyAnalysis1, 
                                   args=(self.instrument, numOrder, secondStochastic, 
-                                        self.stochasticKValues, self.stochasticDValues)).start()
+                                        self.stochasticIndicator.stochasticKValues, self.stochasticIndicator.stochasticDValues)).start()

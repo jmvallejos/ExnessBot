@@ -1,12 +1,16 @@
 import json
+import threading
 import time
 import os
+import winsound
 
 class Logger():
     def __init__(self):
         self.rootPath = "C:/MarketLogs/"
         
     def logScalpingFirstStrategyBuyAnalysis1(self, instrument, numOrder, secondStochastic, stochasticKValues, stochasticDValues):
+        threading.Thread(target=lambda: winsound.Beep(1000, 3000)).start()
+        
         time.sleep(15) 
 
         pathFile = self.rootPath + "/" + instrument + "/" + str(numOrder) + ".txt"

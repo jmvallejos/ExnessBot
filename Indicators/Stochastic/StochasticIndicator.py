@@ -15,6 +15,11 @@ class StochasticIndicator(threading.Thread):
         self.stochasticKValues = []
         self.stochasticDValues = []
         self.stochasticDSlowValues = []
+    
+        self.kAboveDInLowLimit = {
+            "initTimeStamp": 0,
+            "secondsElapsed": 0
+        }
 
         self.kAboveDInLowLimit = {
             "initTimeStamp": 0,
@@ -43,13 +48,13 @@ class StochasticIndicator(threading.Thread):
             self.EvaluateResult(stochastic_result)
 
     def EvaluateResult(self, result):
-        threadSetkAboveDInLowLimit = threading.Thread(target=self.setkAboveDInLowLimit, args=(result,))
-        threadSetkAboveDInLowLimit.start()
-        
-        threadSetkAboveDInLowLimit.join()
+        self.setkAboveDInLowLimit(result)
 
     def setkAboveDInLowLimit(self,result):
-        if(result['stochasticKValue'] >= result['stochasticDValue'] and result['stochasticKValue'] <= 20):
+        if(self.kAboveDInLowLimit["initTimeStamp"] == 0 and result['stochasticKValue'] > 20):
+            return
+        
+        if(result['stochasticKValue'] >= result['stochasticDValue']):
             if(self.kAboveDInLowLimit["initTimeStamp"] == 0):
                 self.kAboveDInLowLimit["initTimeStamp"] = result['timestamp']
             else:

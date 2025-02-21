@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 import numpy as np
 
@@ -23,5 +24,5 @@ class StochasticCalculator:
             "stochasticKValue": float(lastValue['%K']), 
             "stochasticDValue": float(lastValue['%D']),
             "stochasticDSlowValue": float(lastValue['%D_slow']),
-            "timestamp": int(lastValue.name.timestamp())      
+            "timestamp": int(time.time())      
         }
