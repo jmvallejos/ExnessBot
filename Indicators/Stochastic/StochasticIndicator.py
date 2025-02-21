@@ -1,13 +1,12 @@
 import threading
 import time
 from datetime import datetime, timedelta
-
-from DataGenerators.PeriodsGenerator import PeriodsGenerator
 from Indicators.Stochastic.StochasticCalculator import StochasticCalculator
 
 class StochasticIndicator(threading.Thread):
-    def __init__(self, instrument, periodTimeInMinutes, minPeriods, k_fast, d_fast, d_slow):
+    def __init__(self, period_generator, instrument, periodTimeInMinutes, minPeriods, k_fast, d_fast, d_slow):
         super().__init__()
+        self.period_generator = period_generator
         self.instrument = instrument
         self.periodTimeInMinutes = periodTimeInMinutes
         self.minPeriods = minPeriods
@@ -32,13 +31,11 @@ class StochasticIndicator(threading.Thread):
     def CalculateStochastic(self):
         # Bucle para calcular estocástico cada segundo
         while True:
-            # Instanciar PeriodGenerator y obtener el periodo
-            period_generator = PeriodsGenerator(self.instrument, self.periodTimeInMinutes, self.minPeriods)
-            period_generator.generate()
+            self.period_generator.generate()
             
             # Instanciar StochasticGenerator y calcular el estocástico
-            stochastic_generator = StochasticCalculator()
-            stochastic_result = stochastic_generator.calculateStochastic(period_generator.periods, self.k_fast, self.d_fast, self.d_slow)
+            stochasticCalculator = StochasticCalculator()
+            stochastic_result = stochasticCalculator.calculateStochastic(self.period_generator.periods, self.k_fast, self.d_fast, self.d_slow)
             
             # Agregar valores a las listas
             timestamp = stochastic_result['timestamp']
@@ -48,12 +45,17 @@ class StochasticIndicator(threading.Thread):
             self.EvaluateResult(stochastic_result)
 
     def EvaluateResult(self, result):
+        threadSetkAboveDInLowLimit = threading.Thread(target=self.setkAboveDInLowLimit, args=(result,))
+        threadSetkAboveDInLowLimit.start()
+        
+        threadSetkAboveDInLowLimit.join()
+
+    def setkAboveDInLowLimit(self,result):
         if(result['stochasticKValue'] >= result['stochasticDValue'] and result['stochasticKValue'] <= 20):
             if(self.kAboveDInLowLimit["initTimeStamp"] == 0):
                 self.kAboveDInLowLimit["initTimeStamp"] = result['timestamp']
             else:
                 self.kAboveDInLowLimit["secondsElapsed"] = result['timestamp'] - self.kAboveDInLowLimit["initTimeStamp"]
-                print("inicio " + str(self.kAboveDInLowLimit)+ ' ' + str(result['stochasticKValue']) + ' ' + str(result['stochasticDValue']))
         else:
             self.kAboveDInLowLimit["initTimeStamp"] = 0
             self.kAboveDInLowLimit["secondsElapsed"] = 0

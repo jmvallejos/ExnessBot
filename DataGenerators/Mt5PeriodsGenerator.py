@@ -1,14 +1,14 @@
 import MetaTrader5 as mt5
 
-class PeriodsGenerator:
+class Mt5PeriodsGenerator:
     def __init__(self, instrument, timePeriodInMinutes, numPeriods):
         self.instrument = instrument
         self.timePeriodInMinutes = timePeriodInMinutes
         self.numPeriods = numPeriods
-        self.periods = []  # Lista para almacenar los periodos generados
-
+        
     def generate(self):
         # Obtener las tasas de precios
+        self.periods = []
         timeFrame = None
         if(self.timePeriodInMinutes == 1):
             timeFrame = mt5.TIMEFRAME_M1
