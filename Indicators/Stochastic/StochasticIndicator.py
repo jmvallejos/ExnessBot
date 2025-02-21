@@ -4,12 +4,10 @@ from datetime import datetime, timedelta
 from Indicators.Stochastic.StochasticCalculator import StochasticCalculator
 
 class StochasticIndicator(threading.Thread):
-    def __init__(self, period_generator, instrument, periodTimeInMinutes, minPeriods, k_fast, d_fast, d_slow):
+    def __init__(self, period_generator, instrument, k_fast, d_fast, d_slow):
         super().__init__()
         self.period_generator = period_generator
         self.instrument = instrument
-        self.periodTimeInMinutes = periodTimeInMinutes
-        self.minPeriods = minPeriods
         self.k_fast = k_fast
         self.d_fast = d_fast
         self.d_slow = d_slow
