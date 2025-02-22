@@ -19,5 +19,5 @@ class Mt5PeriodsGenerator:
                 "high": float(rate['high']),
                 "low": float(rate['low']),
                 "close": float(rate['close']),
-                "timestamp": int(rate['time'])  # Usamos el timestamp del final del periodo
+                "timestamp": int(rate['time'])  
             })

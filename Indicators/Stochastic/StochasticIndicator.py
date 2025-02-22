@@ -4,10 +4,9 @@ from datetime import datetime, timedelta
 from Indicators.Stochastic.StochasticCalculator import StochasticCalculator
 
 class StochasticIndicator(threading.Thread):
-    def __init__(self, period_generator, instrument, k_fast, d_fast, d_slow):
+    def __init__(self, period_generator, k_fast, d_fast, d_slow):
         super().__init__()
         self.period_generator = period_generator
-        self.instrument = instrument
         self.k_fast = k_fast
         self.d_fast = d_fast
         self.d_slow = d_slow
@@ -18,12 +17,14 @@ class StochasticIndicator(threading.Thread):
     
         self.kAboveDInLowLimit = {
             "initTimeStamp": 0,
-            "secondsElapsed": 0
+            "secondsElapsed": 0,
+            "triggered": False
         }
 
-        self.kAboveDInLowLimit = {
+        self.kBelowDInUpLimit = {
             "initTimeStamp": 0,
-            "secondsElapsed": 0
+            "secondsElapsed": 0,
+            "triggered": False
         }
 
     def run(self):
@@ -49,6 +50,7 @@ class StochasticIndicator(threading.Thread):
 
     def EvaluateResult(self, result):
         self.setkAboveDInLowLimit(result)
+        self.setkBelowDInUpLimit(result)
 
     def setkAboveDInLowLimit(self,result):
         if(self.kAboveDInLowLimit["initTimeStamp"] == 0 and result['stochasticKValue'] > 20):
@@ -62,6 +64,21 @@ class StochasticIndicator(threading.Thread):
         else:
             self.kAboveDInLowLimit["initTimeStamp"] = 0
             self.kAboveDInLowLimit["secondsElapsed"] = 0
+            self.kAboveDInLowLimit["triggered"] = False
+
+    def setkBelowDInUpLimit(self,result):
+        if(self.kBelowDInUpLimit["initTimeStamp"] == 0 and result['stochasticKValue'] < 80):
+            return
+        
+        if(result['stochasticKValue'] <= result['stochasticDValue']):
+            if(self.kBelowDInUpLimit["initTimeStamp"] == 0):
+                self.kBelowDInUpLimit["initTimeStamp"] = result['timestamp']
+            else:
+                self.kBelowDInUpLimit["secondsElapsed"] = result['timestamp'] - self.kBelowDInUpLimit["initTimeStamp"]
+        else:
+            self.kBelowDInUpLimit["initTimeStamp"] = 0
+            self.kBelowDInUpLimit["secondsElapsed"] = 0
+            self.kBelowDInUpLimit["triggered"] = False
 
     def CutLists(self):
         while(True):
@@ -69,7 +86,7 @@ class StochasticIndicator(threading.Thread):
                 continue
 
             current_timestamp = self.stochasticKValues[-1]["x"]
-            cutoff_timestamp = current_timestamp - 60 
+            cutoff_timestamp = current_timestamp - 600 
 
             self.stochasticKValues[:] = [item for item in self.stochasticKValues if item["x"] >= cutoff_timestamp]
             self.stochasticDValues[:] = [item for item in self.stochasticDValues if item["x"] >= cutoff_timestamp]
