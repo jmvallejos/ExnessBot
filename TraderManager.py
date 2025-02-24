@@ -1,5 +1,6 @@
 import time
 import MetaTrader5 as mt5
+from Indicators.EMA.EmaIndicator import EmaIndicator
 from Indicators.RSI.RsiIndicator import RsiIndicator
 from Indicators.Stochastic.StochasticIndicator import StochasticIndicator
 from Loggers.Logger import Logger
@@ -8,12 +9,12 @@ from Strategies.Scalping.ScalpingFirstStrategy import ScalpingFirstStrategy
 from DataGenerators.Mt5PeriodsGenerator import Mt5PeriodsGenerator
 
 def ScalpingFirstStrategyBuilder(instrument, marketOperator, logger):
-    period_generator = Mt5PeriodsGenerator(instrument, 1, 25)
-    stochasticIndicator = StochasticIndicator(period_generator, 14, 3, 3)
+    periodsGenerator = Mt5PeriodsGenerator(instrument)
 
-    period_generator = Mt5PeriodsGenerator(instrument, 1, 14)
-    rsiIndicator = RsiIndicator(period_generator)
-    strateggy = ScalpingFirstStrategy(instrument, marketOperator, stochasticIndicator, rsiIndicator, logger)
+    rsiIndicator = RsiIndicator(5)
+    emaIndicator = EmaIndicator()
+
+    strateggy = ScalpingFirstStrategy(instrument, marketOperator, periodsGenerator, rsiIndicator, emaIndicator, logger)
     
     strateggy.start()
 
@@ -23,10 +24,18 @@ if __name__ == "__main__":
     
     logger = Logger()
     marketOperator = Mt5Operator()
-    marketOperator.start()
 
-    ScalpingFirstStrategyBuilder("BTCUSDm", marketOperator, logger)
-    
+    ScalpingFirstStrategyBuilder("EURUSDm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("USDJPYm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("GBPUSDm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("USDCHFm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("AUDUSDm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("USDCADm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("NZDUSDm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("EURGBPm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("EURJPYm", marketOperator, logger)
+    ScalpingFirstStrategyBuilder("GBPJPYm", marketOperator, logger)
+        
     while(True):
         time.sleep(60)
 
