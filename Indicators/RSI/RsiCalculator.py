@@ -19,4 +19,4 @@ class RsiCalculator:
         df['rsi'] = 100 - (100 / (1 + rs))
         last = df.iloc[-1]
 
-        return {"timestamp": int(time.time()) ,"value" : round(float(last["rsi"]),5)}
+        return {"timestamp": int(last["timestamp"]) ,"value" : round(float(last["rsi"]),5)}

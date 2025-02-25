@@ -38,7 +38,7 @@ class EmaIndicator():
         try:
             current_timestamp = self.list[-1]["timestamp"]
             cutoff_timestamp = current_timestamp - 600 
-            self.list[:] = [item for item in self.ema if item["timestamp"] >= cutoff_timestamp]
+            self.list[:] = [item for item in self.list if item["timestamp"] >= cutoff_timestamp]
         
         except Exception as e:
             print(f"Ocurrió un error: {e}")

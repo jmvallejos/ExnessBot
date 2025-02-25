@@ -24,5 +24,5 @@ class StochasticCalculator:
             "stochasticKValue": float(lastValue['%K']), 
             "stochasticDValue": float(lastValue['%D']),
             "stochasticDSlowValue": float(lastValue['%D_slow']),
-            "timestamp": int(time.time())      
+            "timestamp": int(lastValue["timestamp"])      
         }

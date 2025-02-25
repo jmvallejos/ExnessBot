@@ -3,6 +3,8 @@ import MetaTrader5 as mt5
 
 from DataGenerators.Mt5PeriodsGenerator import Mt5PeriodsGenerator
 from Indicators.EMA.EmaCalculator import EmaCalculator
+from Indicators.MACD.MacdCalculator import MacdCalculator
+from Indicators.MACD.MacdIndicator import MacdIndicator
 
 if __name__ == "__main__":
     if not mt5.initialize():
@@ -10,12 +12,10 @@ if __name__ == "__main__":
 
     periodsGenerator = Mt5PeriodsGenerator("EURUSDm")
     while(True):
-        periodTest1 = periodsGenerator.generate(1, 50)
-
-        emaCalculator = EmaCalculator()
-
-        resultTest1 = emaCalculator.calculate(periodTest1, 3, 9)
-        print('\n')
-        print(str(resultTest1["principal"]))
+        periods = periodsGenerator.generate(1, 75)
+        macdIndicator = MacdIndicator(12, 26, 9)
+        macdIndicator.CalculateMacd(periods)
+        result = macdIndicator.list[-1]
+        print(str(result["macd"]) + ' ' +  str(result["macdSignal"]) + ' ' +  str(result["macdHist"]))
             
     

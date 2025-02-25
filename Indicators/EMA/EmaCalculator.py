@@ -11,4 +11,5 @@ class EmaCalculator():
         principal = talib.EMA(closing_prices, timeperiod=pricipal)[-1]
         secundary = talib.EMA(closing_prices, timeperiod=secundary)[-1]
 
-        return {"timestamp": int(time.time()), "principal" : round(float(principal),5), "secundary" : round(float(secundary),5)}
+        lastPeriod = periods[-1]
+        return {"timestamp": int(lastPeriod["timestamp"]), "principal" : round(float(principal),5), "secundary" : round(float(secundary),5)}
