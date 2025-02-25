@@ -4,165 +4,117 @@ import time
 import MetaTrader5 as mt5
 
 class ScalpingFirstStrategy(threading.Thread):
-    def __init__(self, instrument, marketOperator, periodsGenerator, 
-                 rsiIndicator, emaIndicator, logger):
+    def __init__(self, instrument, marketOperator, periodsGenerator, emaIndicator, rsiIndicator, logger):
         super().__init__()
         self.instrument = instrument
         self.marketOperator = marketOperator
         self.periodsGenerator = periodsGenerator
-        self.rsiIndicator = rsiIndicator
         self.emaIndicator = emaIndicator
+        self.rsiIndicator = rsiIndicator
         self.logger = logger
-        self.currentRsiBuyAlert = None
-        self.currentRsiSellAlert = None
+
+        self.emaBuySignal = None
+        self.emaSellSignal = None 
 
     def run(self):
-        threading.Thread(target=self.runIndicators).start()
-        threading.Thread(target=self.buyAnalysis1).start()
-        threading.Thread(target=self.sellAnalysis1).start()
-
-    def runIndicators(self):
-        init = time.time()
         while(True):
-            periods = self.periodsGenerator.generate(1, 50)
-            self.rsiIndicator.CalculateRsi(periods)
-            self.emaIndicator.CalculateEma(periods)
+            self.runIndicators()
+            self.buyAnalysis1()
+            self.sellAnalysis1()
+        
+    def runIndicators(self):
+        periods = self.periodsGenerator.generate(1, 50)
+        self.emaIndicator.CalculateEma(periods)
+        self.rsiIndicator.CalculateRsi(periods)
 
-            if((init - time.time()) % 600):
-                self.rsiIndicator.CutLists()
-                self.emaIndicator.CutLists()
-
+        if(len(self.emaIndicator.list) == 0 or len(self.rsiIndicator.list) == 0):
+            return
+        
+        if(time.time() - self.emaIndicator.list[0]["timestamp"] > 2700):
+            self.emaIndicator.CutLists()
+            self.rsiIndicator.CutLists()
 
     def buyAnalysis1(self):
-        init = int(time.time())
-        while(True):
-            try:
-                if((init - time.time()) % 10):
-                    print(self.instrument + ' buyAnalysis1 healthy')
+        try:
+            ema = self.emaIndicator.list[-1]
+            #solo interesa si ema principal esta por encima de ema secundaria
+            if(ema["principal"] < ema["secundary"]):
+                return
+            
+            #encuentro el item donde se produjo el cruce.
+            emaCross = self.emaIndicator.CrossUp
+            if(emaCross is None):
+                return
+            
+            #si el cruce ocurrio hace menos de 3 segundos retorno.
+            if(ema["timestamp"] - emaCross["timestamp"] <= 3):
+                return
+            
+            #si el cruce ocurrio hace mas de 30 segundos retorno.
+            if(ema["timestamp"] - emaCross["timestamp"] >= 30):
+                return
+            
+            #si el cruce es el mismo que disparó el ultimo evento de compra, retorno.
+            if(self.emaBuySignal is not None and emaCross["timestamp"] == self.emaBuySignal["timestamp"]):
+                return
+            
+            rsi = self.rsiIndicator.list[-1]
+            crossRsi = self.rsiIndicator.crossDownLimit
 
-                if(len(self.rsiIndicator.list) == 0):
-                    continue
+            if(crossRsi is None):
+                return
+            
+            if(rsi["timestamp"] - crossRsi["timestamp"] > 480):
+                return
 
-                currentRsi = self.rsiIndicator.list[-1]
-                if(currentRsi["y"] < 30):
-                    continue
-                
-                
-                lastRsiItemBelow30 = None 
-                for item in reversed(self.rsiIndicator.list):
-                    if item["y"] < 30:
-                        lastRsiItemBelow30 = item
-                        break
+            #Compro la accion y guardo la señal de compra
+            buySuccess = self.marketOperator.Buy(self.instrument)
+            if(buySuccess):
+                self.emaBuySignal = emaCross
 
-                if(lastRsiItemBelow30 is None or currentRsi["x"] - lastRsiItemBelow30["x"] > 60):
-                    continue
-                
+        except Exception as e:    
+            print(f"Ocurrió un error: {e}")
+            
 
-                if(self.currentRsiBuyAlert is not None and self.currentRsiBuyAlert["x"] == lastRsiItemBelow30["x"]):
-                    return
-                
-                currentEma9 = self.emaIndicator.ema9[-1]["y"]
-                currentEma21 = self.emaIndicator.ema21[-1]["y"]
+    def sellAnalysis1(self):        
+        try:
+            ema = self.emaIndicator.list[-1]
+            
+            #solo interesa si ema principal esta por debajo de ema secundaria
+            if(ema["principal"] > ema["secundary"]):
+                return
+            
+            #encuentro el item donde se produjo el cruce.
+            emaCross = self.emaIndicator.CrossDown
+            if(emaCross is None):
+                return
+            
+            #si el cruce ocurrio hace menos de 5 segundos retorno.
+            if(ema["timestamp"] - emaCross["timestamp"] <= 5):
+                return
+            
+            #si el cruce ocurrio hace mas de 30 segundos retorno.
+            if(ema["timestamp"] - emaCross["timestamp"] >= 30):
+                return
+            
+            #si el cruce es el mismo que disparó el ultimo evento de venta, retorno.
+            if(self.emaSellSignal is not None and emaCross["timestamp"] == self.emaSellSignal["timestamp"]):
+                return
+            
+            rsi = self.rsiIndicator.list[-1]
+            crossRsi = self.rsiIndicator.crossUpLimit
 
-                if(currentEma9 > currentEma21):
-                    continue
-                
-                
-                init = time.time()
-                ema9CrossedToEma21 = False
-                while(True):
+            if(crossRsi is None):
+                return
+            
+            if(rsi["timestamp"] - crossRsi["timestamp"] > 480):
+                return
 
-                    currentEma9 = self.emaIndicator.ema9[-1]["y"]
-                    currentEma21 = self.emaIndicator.ema21[-1]["y"]
-                    
-                    if(currentEma9 > currentEma21):
-                        ema9CrossedToEma21 = True
-                        break
+            #Vendo la accion y guardo la señal de venta
+            sellSuccess = self.marketOperator.Sell(self.instrument)
+            if(sellSuccess):
+                self.emaSellSignal = emaCross
 
-                    if(time.time() - init > 480): #si ya pasaron 8 minutos salgo del bucle
-                        break
-                
-                if(ema9CrossedToEma21 == False):
-                    return
-
-                i = 1
-                response = None
-                while(i <= 5):
-                    i = i+1
-                    response = self.marketOperator.Buy(self.instrument)
-                    if(response.order is not None and response.order > 0):
-                        break
-
-                if(response.order > 0):
-                    self.currentRsiBuyAlert = lastRsiItemBelow30
-                    orderTime = currentRsi["x"]
-                    threading.Thread(target=self.logger.log, 
-                                    args=(self.instrument, response.order, orderTime, "ScalpingFirstStrategy", "buyAnalisys1", self.rsiIndicator.list)).start()
-            except Exception as e:    
-                print(f"Ocurrió un error: {e}")
-                continue
-
-    def sellAnalysis1(self):
-        init = time.time()
-        while(True):
-            try:
-                if((init - time.time()) % 10):
-                    print(self.instrument + ' buyAnalysis1 healthy')
-
-                if(len(self.rsiIndicator.list) == 0):
-                    continue
-
-                currentRsi = self.rsiIndicator.list[-1]
-                if(currentRsi["y"] > 70):
-                    continue
-                
-                lastRsiItemUp70 = None 
-                for item in reversed(self.rsiIndicator.list):
-                    if item["y"] > 70:
-                        lastRsiItemUp70 = item
-                        break
-
-                if(lastRsiItemUp70 is None or currentRsi["x"] - lastRsiItemUp70["x"] > 60):
-                    continue
-
-                if(self.currentRsiSellAlert is not None and self.currentRsiSellAlert["x"] == lastRsiItemUp70["x"]):
-                    return
-                
-                currentEma9 = self.emaIndicator.ema9[-1]["y"]
-                currentEma21 = self.emaIndicator.ema21[-1]["y"]
-
-                if(currentEma9 < currentEma21):
-                    continue
-                    
-                init = time.time()
-                ema9CrossedToEma21 = False
-                while(True):
-                    currentEma9 = self.emaIndicator.ema9[-1]["y"]
-                    currentEma21 = self.emaIndicator.ema21[-1]["y"]
-                    
-                    if(currentEma9 < currentEma21):
-                        ema9CrossedToEma21 = True
-                        break
-
-                    if(time.time() - init > 480): #si ya pasaron 8 minutos salgo del bucle
-                        break
-                
-                if(ema9CrossedToEma21 == False):
-                    return
-
-                i = 1
-                response = None
-                while(i <= 5):
-                    i = i+1
-                    response = self.marketOperator.Sell(self.instrument)
-                    if(response.order is not None and response.order > 0):
-                        break
-                
-                if(response.order > 0):
-                    self.currentRsiBuyAlert = lastRsiItemUp70
-                    orderTime = currentRsi["x"]
-                    threading.Thread(target=self.logger.log, 
-                                    args=(self.instrument, response.order, orderTime, "ScalpingFirstStrategy", "sellAnalisys1", self.rsiIndicator.list)).start()
-            except Exception as e:    
-                print(f"Ocurrió un error: {e}")
-                continue
+        except Exception as e:    
+            print(f"Ocurrió un error: {e}")
+        

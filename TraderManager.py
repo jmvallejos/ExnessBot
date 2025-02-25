@@ -11,10 +11,10 @@ from DataGenerators.Mt5PeriodsGenerator import Mt5PeriodsGenerator
 def ScalpingFirstStrategyBuilder(instrument, marketOperator, logger):
     periodsGenerator = Mt5PeriodsGenerator(instrument)
 
-    rsiIndicator = RsiIndicator(5)
-    emaIndicator = EmaIndicator()
+    emaIndicator = EmaIndicator(3, 9)
+    rsiIndicator = RsiIndicator(3, 90, 10)
 
-    strateggy = ScalpingFirstStrategy(instrument, marketOperator, periodsGenerator, rsiIndicator, emaIndicator, logger)
+    strateggy = ScalpingFirstStrategy(instrument, marketOperator, periodsGenerator, emaIndicator, rsiIndicator, logger)
     
     strateggy.start()
 

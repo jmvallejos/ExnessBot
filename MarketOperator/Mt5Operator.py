@@ -1,3 +1,5 @@
+import threading
+import winsound
 import MetaTrader5 as mt5
 
 class Mt5Operator():
@@ -41,7 +43,11 @@ class Mt5Operator():
                 "type_filling": mt5.ORDER_FILLING_IOC  # Llenado inmediato o cancelación
             }
             
-            return mt5.order_send(request)        
+            response = mt5.order_send(request)
+            if(response.order > 0):
+                threading.Thread(target=lambda: winsound.Beep(1000, 3000)).start()
+                return True
+            return False        
         except Exception as e:
             print(f"Ocurrió un error: {e}")
             return None
@@ -69,10 +75,13 @@ class Mt5Operator():
                 "type_time": mt5.ORDER_TIME_GTC,  # Orden válida hasta que se cancele
                 "type_filling": mt5.ORDER_FILLING_IOC  # Llenado inmediato o cancelación
             }
-            
-            return mt5.order_send(request)
+            response = mt5.order_send(request)
+            if(response.order > 0):
+                threading.Thread(target=lambda: winsound.Beep(1000, 3000)).start()
+                return True
+            return False
         except Exception as e:
             print(f"Ocurrió un error: {e}")
-            return None
+            return False
 
         

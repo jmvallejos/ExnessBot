@@ -1,15 +1,21 @@
 import datetime
 import MetaTrader5 as mt5
 
-from BackTesting.TicksLevel import TicksLevel
+from DataGenerators.Mt5PeriodsGenerator import Mt5PeriodsGenerator
+from Indicators.EMA.EmaCalculator import EmaCalculator
 
 if __name__ == "__main__":
     if not mt5.initialize():
         raise ValueError("No esta inicializado mt5")
-    
-    ticksLevel = TicksLevel("EURUSDm")
-    
-    date_start = datetime.datetime(2025, 2, 21, 0, 0, 0)    
-    date_end = datetime.datetime(2025, 2, 21, 23, 59, 59)
 
-    ticksLevel.generateListOfTicks(date_start, date_end)
+    periodsGenerator = Mt5PeriodsGenerator("EURUSDm")
+    while(True):
+        periodTest1 = periodsGenerator.generate(1, 50)
+
+        emaCalculator = EmaCalculator()
+
+        resultTest1 = emaCalculator.calculate(periodTest1, 3, 9)
+        print('\n')
+        print(str(resultTest1["principal"]))
+            
+    

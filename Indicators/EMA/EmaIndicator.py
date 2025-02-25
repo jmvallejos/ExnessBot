@@ -4,38 +4,41 @@ import time
 from Indicators.EMA.EmaCalculator import EmaCalculator
 
 
-class EmaIndicator(threading.Thread):
-    def __init__(self):
-        super().__init__()   
-        self.ema9 = []
-        self.ema21 = [] 
+class EmaIndicator():
+    def __init__(self, principal, secundary):
+        self.list = [] 
+        self.principal = principal
+        self.secundary = secundary
 
-    def run(self):
-        threading.Thread(target=self.CalculateEma).start()
-        threading.Thread(target=self.CutLists).start()
-    
+        self.CrossUp = None
+        self.CrossDown = None
+        
+
     def CalculateEma(self, periods):
         try:            
             emaCalculator = EmaCalculator()
-            emaResult = emaCalculator.calculate(periods)
-            
-            timestamp = emaResult['timestamp']
-            self.ema9.append({'x': timestamp, 'y': emaResult['ema9']})
-            self.ema21.append({'x': timestamp, 'y': emaResult['ema21']})
-
+            emaResult = emaCalculator.calculate(periods, self.principal, self.secundary)            
+            self.EvaluateResult(emaResult)
+            self.list.append(emaResult)
         except Exception as e:
             print(f"Ocurrió un error: {e}")
 
+    def EvaluateResult(self, result):
+        if(len(self.list) == 0):
+            return
+        
+        lastItem = self.list[-1]
+        if(lastItem["principal"] <= lastItem["secundary"] and result["principal"] > result["secundary"]):
+            self.CrossUp = result
+
+        if(lastItem["principal"] >= lastItem["secundary"] and result["principal"] < result["secundary"]):
+            self.CrossDown = result
+
     def CutLists(self):
         try:
-            if(len(self.ema9) == 0 or len(self.ema21) == 0):
-                return
-
-            current_timestamp = self.ema9[-1]["x"]
+            current_timestamp = self.list[-1]["timestamp"]
             cutoff_timestamp = current_timestamp - 600 
-
-            self.ema9[:] = [item for item in self.ema9 if item["x"] >= cutoff_timestamp]
-            self.ema21[:] = [item for item in self.ema21 if item["x"] >= cutoff_timestamp]
-
+            self.list[:] = [item for item in self.ema if item["timestamp"] >= cutoff_timestamp]
+        
         except Exception as e:
             print(f"Ocurrió un error: {e}")
